@@ -91,8 +91,9 @@ Every sale feeds the learning engine:
 
 ### Prerequisites
 - Node.js 18+
-- OpenRouter API key ([get one](https://openrouter.ai))
+- OpenRouter API key ([get one](https://openrouter.ai)) — atau provider OpenAI-compatible lain
 - Playwright browsers
+- **Residential proxy** — wajib buat production (Tokopedia/Shopee blokir datacenter IP)
 
 ### Installation
 
@@ -143,10 +144,73 @@ DRY_RUN=true          # Set to false for production
 }
 ```
 
-### Run
+## Proxy Setup (Wajib)
+
+Marketplace Indonesia (Tokopedia, Shopee, Bukalapak) pakai **PerimeterX / Cloudflare / Datadome** — mereka auto-blokir traffic dari datacenter IP (AWS, GCP, Azure, Tencent Cloud, dll). Tanpa residential proxy, scraping selalu gagal dengan `ERR_HTTP2_PROTOCOL_ERROR`, `403`, atau infinite captcha.
+
+### Kenapa Residential Proxy?
+
+| IP Type | Tokopedia | Shopee | Bukalapak |
+|---------|-----------|--------|-----------|
+| Datacenter (Lighthouse, VPS) | ❌ Block | ❌ Block | ❌ Block |
+| Residential Static | ✅ Lolos | ✅ Lolos | ⚠️ Kadang block |
+| Residential Rotating | ✅✅ Lolos | ✅✅ Lolos | ✅ Lolos |
+
+### Opsi Provider
+
+| Provider | Harga | Bandwidth | Cocok Buat |
+|----------|-------|-----------|------------|
+| [IPRoyal](https://iproyal.com) | ~$7/GB | Residential rotating | Starter |
+| [Bright Data](https://brightdata.com) | ~$8.40/GB | Residential + DC | Production |
+| [Smartproxy](https://smartproxy.com) | ~$7/GB | Residential rotating | Mid-scale |
+| [Oxylabs](https://oxylabs.io) | ~$15/GB | Residential + Mobile | Enterprise |
+
+> Rekomendasi: mulai dari **IPRoyal** ($7/GB, bisa beli 1GB dulu buat testing). 1GB cukup untuk ~50k listing.
+
+### Konfigurasi Proxy
+
+**1. Dapatkan proxy URL:**
+```
+http://username:password@geo.iproyal.com:12321
+```
+
+**2. Tambahkan ke `.env`:**
+```env
+PROXY_URL=http://username:password@geo.iproyal.com:12321
+```
+
+**3. Agent otomatis baca `process.env.PROXY_URL` —** setiap `scan_tokopedia`, `scan_shopee`, `scan_bukalapak` akan launch browser dengan proxy itu.
+
+### Tanpa Proxy (Development Only)
+
+Kalau cuma mau coba logic agent (LLM + tool calling) tanpa scraping beneran, jalanin di mode `DRY_RUN=true`:
 
 ```bash
-npm start          # Full agent: cron cycles + REPL
+DRY_RUN=true npm start
+```
+
+Di DRY_RUN mode, tools scraper return mock data. Cocok buat test flow Screen→Decide→Act tanpa burn kuota proxy.
+
+### Test Proxy
+
+```bash
+# Test curl langsung
+curl -x "http://user:pass@geo.iproyal.com:12321" https://api.ipify.org
+
+# Test Playwright
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({
+    proxy: { server: 'http://geo.iproyal.com:12321', username: 'user', password: 'pass' }
+  });
+  const page = await browser.newPage();
+  await page.goto('https://www.tokopedia.com/search?q=laptop');
+  console.log(await page.title());
+  await browser.close();
+})();
+"
+\n### Run\n\n```bash\nnpm start          # Full agent: cron cycles + REPL
 npm run dev        # Dry run mode (no state writes)
 npm run screen     # Single screening cycle
 npm run decide     # Single decision cycle
