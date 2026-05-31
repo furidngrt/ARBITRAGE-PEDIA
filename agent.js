@@ -3,6 +3,11 @@
  * Adapted from Meridian architecture. OpenAI-compatible (OpenRouter by default).
  */
 
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, resolve } from "path";
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, ".env"), override: true });
 import OpenAI from "openai";
 import { jsonrepair } from "jsonrepair";
 import { buildSystemPrompt } from "./prompt.js";

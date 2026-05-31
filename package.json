@@ -11,10 +11,11 @@
     "decide": "node index.js --once --decide"
   },
   "dependencies": {
-    "openai": "^4.50.0",
-    "node-cron": "^3.0.3",
+    "cheerio": "^1.0.0",
+    "dotenv": "^17.4.2",
     "jsonrepair": "^3.8.0",
-    "playwright": "^1.45.0",
-    "cheerio": "^1.0.0"
+    "node-cron": "^3.0.3",
+    "openai": "^4.50.0",
+    "playwright": "^1.45.0"
   }
 }
