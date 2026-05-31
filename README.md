@@ -62,7 +62,7 @@ Promising items are saved via `save_candidate` for the Decider to evaluate.
 
 ### 2. DECIDE — Evaluate Profit Potential
 
-The **Decider Agent** (powered by Claude/GPT via OpenRouter) evaluates each candidate:
+The **Decider Agent** (powered by LLM via OpenAI-compatible API) evaluates each candidate:
 
 1. **`compare_market_price`** — Searches across all platforms for the same item to find fair market value
 2. **`calculate_margin`** — Computes estimated profit after platform fees (5%), payment fees (1.5%), and shipping
@@ -91,9 +91,9 @@ Every sale feeds the learning engine:
 
 ### Prerequisites
 - Node.js 18+
-- OpenRouter API key ([get one](https://openrouter.ai)) — atau provider OpenAI-compatible lain
+- OpenAI-compatible API key (OpenRouter, MIMO, GeneralCompute, or any provider)
 - Playwright browsers
-- **Residential proxy** — wajib buat production (Tokopedia/Shopee blokir datacenter IP)
+- **Residential proxy** — mandatory for production (Indonesian marketplaces block datacenter IPs)
 
 ### Installation
 
@@ -108,14 +108,16 @@ npx playwright install chromium
 
 ```bash
 cp .env.example .env
-# Edit .env — add your OPENROUTER_API_KEY
-# Edit user-config.example.json → user-config.json (or use defaults)
+# Edit .env — add your API key
+# Copy user-config.example.json → user-config.json (or use defaults)
 ```
 
 **.env:**
 ```env
 OPENROUTER_API_KEY=sk-or-...
-DRY_RUN=true          # Set to false for production
+LLM_MODEL=mimo-v2.5-pro                              # Any OpenAI-compatible model
+LLM_BASE_URL=https://token-plan-sgp.xiaomimimo.com/v1  # Or OpenRouter/your endpoint
+DRY_RUN=true                                         # Set to false for production
 ```
 
 **user-config.json** (defaults shown — all optional):
@@ -132,9 +134,9 @@ DRY_RUN=true          # Set to false for production
     "targetMarkupPct": 50
   },
   "categories": [
-    { "id": "elektronik", "keywords": ["laptop", "monitor", "keyboard"], "weight": 1.0 },
+    { "id": "electronics", "keywords": ["laptop", "monitor", "keyboard"], "weight": 1.0 },
     { "id": "gaming", "keywords": ["ps5", "nintendo switch", "steam deck"], "weight": 1.3 },
-    { "id": "hp-tablet", "keywords": ["iphone", "samsung", "ipad"], "weight": 1.2 }
+    { "id": "phones", "keywords": ["iphone", "samsung", "ipad"], "weight": 1.2 }
   ],
   "screening": {
     "intervalMin": 15,
@@ -144,73 +146,10 @@ DRY_RUN=true          # Set to false for production
 }
 ```
 
-## Proxy Setup (Wajib)
-
-Marketplace Indonesia (Tokopedia, Shopee, Bukalapak) pakai **PerimeterX / Cloudflare / Datadome** — mereka auto-blokir traffic dari datacenter IP (AWS, GCP, Azure, Tencent Cloud, dll). Tanpa residential proxy, scraping selalu gagal dengan `ERR_HTTP2_PROTOCOL_ERROR`, `403`, atau infinite captcha.
-
-### Kenapa Residential Proxy?
-
-| IP Type | Tokopedia | Shopee | Bukalapak |
-|---------|-----------|--------|-----------|
-| Datacenter (Lighthouse, VPS) | ❌ Block | ❌ Block | ❌ Block |
-| Residential Static | ✅ Lolos | ✅ Lolos | ⚠️ Kadang block |
-| Residential Rotating | ✅✅ Lolos | ✅✅ Lolos | ✅ Lolos |
-
-### Opsi Provider
-
-| Provider | Harga | Bandwidth | Cocok Buat |
-|----------|-------|-----------|------------|
-| [IPRoyal](https://iproyal.com) | ~$7/GB | Residential rotating | Starter |
-| [Bright Data](https://brightdata.com) | ~$8.40/GB | Residential + DC | Production |
-| [Smartproxy](https://smartproxy.com) | ~$7/GB | Residential rotating | Mid-scale |
-| [Oxylabs](https://oxylabs.io) | ~$15/GB | Residential + Mobile | Enterprise |
-
-> Rekomendasi: mulai dari **IPRoyal** ($7/GB, bisa beli 1GB dulu buat testing). 1GB cukup untuk ~50k listing.
-
-### Konfigurasi Proxy
-
-**1. Dapatkan proxy URL:**
-```
-http://username:password@geo.iproyal.com:12321
-```
-
-**2. Tambahkan ke `.env`:**
-```env
-PROXY_URL=http://username:password@geo.iproyal.com:12321
-```
-
-**3. Agent otomatis baca `process.env.PROXY_URL` —** setiap `scan_tokopedia`, `scan_shopee`, `scan_bukalapak` akan launch browser dengan proxy itu.
-
-### Tanpa Proxy (Development Only)
-
-Kalau cuma mau coba logic agent (LLM + tool calling) tanpa scraping beneran, jalanin di mode `DRY_RUN=true`:
+### Run
 
 ```bash
-DRY_RUN=true npm start
-```
-
-Di DRY_RUN mode, tools scraper return mock data. Cocok buat test flow Screen→Decide→Act tanpa burn kuota proxy.
-
-### Test Proxy
-
-```bash
-# Test curl langsung
-curl -x "http://user:pass@geo.iproyal.com:12321" https://api.ipify.org
-
-# Test Playwright
-node -e "
-const { chromium } = require('playwright');
-(async () => {
-  const browser = await chromium.launch({
-    proxy: { server: 'http://geo.iproyal.com:12321', username: 'user', password: 'pass' }
-  });
-  const page = await browser.newPage();
-  await page.goto('https://www.tokopedia.com/search?q=laptop');
-  console.log(await page.title());
-  await browser.close();
-})();
-"
-\n### Run\n\n```bash\nnpm start          # Full agent: cron cycles + REPL
+npm start          # Full agent: cron cycles + REPL
 npm run dev        # Dry run mode (no state writes)
 npm run screen     # Single screening cycle
 npm run decide     # Single decision cycle
@@ -230,11 +169,81 @@ npm run decide     # Single decision cycle
 
 ---
 
+## Proxy Setup (Mandatory for Production)
+
+Indonesian marketplaces (Tokopedia, Shopee, Bukalapak) use **PerimeterX / Cloudflare / Datadome** — they automatically block traffic from datacenter IPs (AWS, GCP, Azure, Tencent Cloud, etc.). Without a residential proxy, scraping always fails with `ERR_HTTP2_PROTOCOL_ERROR`, `403`, or infinite captcha loops.
+
+### Why Residential Proxy?
+
+| IP Type | Tokopedia | Shopee | Bukalapak |
+|---------|-----------|--------|-----------|
+| Datacenter (VPS, cloud) | ❌ Blocked | ❌ Blocked | ❌ Blocked |
+| Residential Static | ✅ Passes | ✅ Passes | ⚠️ Occasional block |
+| Residential Rotating | ✅✅ Best | ✅✅ Best | ✅ Passes |
+
+### Provider Options
+
+| Provider | Price | Bandwidth | Best For |
+|----------|-------|-----------|----------|
+| [IPRoyal](https://iproyal.com) | ~$7/GB | Residential rotating | Getting started |
+| [Bright Data](https://brightdata.com) | ~$8.40/GB | Residential + DC | Production scale |
+| [Smartproxy](https://smartproxy.com) | ~$7/GB | Residential rotating | Mid-scale |
+| [Oxylabs](https://oxylabs.io) | ~$15/GB | Residential + Mobile | Enterprise |
+
+> Recommendation: start with **IPRoyal** ($7/GB, you can buy 1GB for testing first). 1GB covers roughly 50k listings.
+
+### Configuration
+
+**1. Get your proxy URL:**
+```
+http://username:password@geo.iproyal.com:12321
+```
+
+**2. Add to `.env`:**
+```env
+PROXY_URL=http://username:password@geo.iproyal.com:12321
+```
+
+**3. The agent automatically reads `process.env.PROXY_URL`** — every `scan_tokopedia`, `scan_shopee`, `scan_bukalapak` call launches a browser with that proxy.
+
+### Without Proxy (Development Only)
+
+To test agent logic (LLM + tool calling) without real scraping, run in `DRY_RUN` mode:
+
+```bash
+DRY_RUN=true npm start
+```
+
+In DRY_RUN mode, scraper tools return mock data. Perfect for testing the Screen→Decide→Act flow without burning proxy bandwidth.
+
+### Testing Your Proxy
+
+```bash
+# Quick curl test
+curl -x "http://user:pass@geo.iproyal.com:12321" https://api.ipify.org
+
+# Playwright test
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({
+    proxy: { server: 'http://geo.iproyal.com:12321', username: 'user', password: 'pass' }
+  });
+  const page = await browser.newPage();
+  await page.goto('https://www.tokopedia.com/search?q=laptop');
+  console.log(await page.title());
+  await browser.close();
+})();
+"
+```
+
+---
+
 ## Architecture
 
 ```
 arbitrage-pedia/
-├── agent.js              # ReAct LLM agent loop (OpenRouter)
+├── agent.js              # ReAct LLM agent loop (OpenAI-compatible)
 ├── index.js              # Orchestrator: cron + REPL
 ├── config.js             # Runtime config from user-config.json
 ├── prompt.js             # Dynamic system prompt per role
@@ -267,12 +276,12 @@ arbitrage-pedia/
 
 ### Why LLM Instead of Simple Rules?
 
-A rules-only scraper would miss context:
-- "iPhone 14 Pro 128GB" at Rp 8M might be overpriced if market is Rp 7.5M, but underpriced if condition is "sealed box"
+A rules-only scraper would miss critical context:
+- "iPhone 14 Pro 128GB" at Rp 8M might be overpriced if market is Rp 7.5M, but a steal if condition is "sealed box"
 - "PS5 Digital" at Rp 4M — good deal or scam? LLM checks seller history, listing age, image count
-- "Laptop gaming" — is it a 2020 model or 2024? LLM reads the full title and description
+- "Gaming laptop" — is it a 2020 model or 2024? LLM reads the full title and description
 
-The LLM acts as a reasoning layer between raw scraping and executable decisions, similar to how Meridian's AI evaluates LP pools beyond just TVL and fees.
+The LLM acts as a reasoning layer between raw scraping and executable decisions — evaluating nuance that keyword filters and price thresholds alone can't catch.
 
 ---
 
@@ -299,9 +308,9 @@ The LLM acts as a reasoning layer between raw scraping and executable decisions,
 
 ---
 
-## Credits
+## Built With
 
-Built with [OpenRouter](https://openrouter.ai), [Playwright](https://playwright.dev), and [node-cron](https://github.com/node-cron/node-cron).
+[OpenAI SDK](https://github.com/openai/openai-node), [Playwright](https://playwright.dev), and [node-cron](https://github.com/node-cron/node-cron).
 
 ## License
 
