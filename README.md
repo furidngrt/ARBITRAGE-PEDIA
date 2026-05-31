@@ -237,8 +237,6 @@ The LLM acts as a reasoning layer between raw scraping and executable decisions,
 
 ## Credits
 
-Architecture inspired by [Meridian](https://github.com/yunus-0x/meridian) — the autonomous DLMM liquidity agent for Solana.
-
 Built with [OpenRouter](https://openrouter.ai), [Playwright](https://playwright.dev), and [node-cron](https://github.com/node-cron/node-cron).
 
 ## License
