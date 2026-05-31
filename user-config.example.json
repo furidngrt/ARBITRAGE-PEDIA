@@ -1,0 +1,44 @@
+{
+  "_comment": "ARBITRAGE-PEDIA user config — customize thresholds, categories, budget",
+  "budget": {
+    "maxPerItem": 500000,
+    "dailyBudget": 3000000,
+    "maxOpenItems": 5,
+    "reserveCash": 200000
+  },
+  "margin": {
+    "minProfitPct": 30,
+    "minProfitAbsolute": 50000,
+    "targetMarkupPct": 50
+  },
+  "categories": [
+    { "id": "elektronik", "keywords": ["laptop", "pc", "monitor", "keyboard", "mouse", "headset", "speaker"], "weight": 1.0 },
+    { "id": "hp-tablet", "keywords": ["iphone", "samsung", "xiaomi", "ipad", "tablet", "oppo", "vivo"], "weight": 1.2 },
+    { "id": "fashion-pria", "keywords": ["sepatu", "jam tangan", "tas", "dompet", "kacamata", "jaket"], "weight": 0.8 },
+    { "id": "gaming", "keywords": ["ps5", "nintendo switch", "xbox", "steam deck", "gamepad", "rog ally", "legion go"], "weight": 1.3 },
+    { "id": "kamera", "keywords": ["sony alpha", "canon eos", "fujifilm", "gopro", "dji", "lensa", "dslr", "mirrorless"], "weight": 1.1 },
+    { "id": "hobi-koleksi", "keywords": ["action figure", "tamiya", "diecast", "lego", "fidget", "gundam", "hot wheels"], "weight": 0.7 }
+  ],
+  "screening": {
+    "intervalMin": 15,
+    "maxListingsPerScan": 50,
+    "platforms": ["tokopedia", "shopee", "bukalapak"],
+    "minPrice": 50000,
+    "maxPrice": 2000000
+  },
+  "seller": {
+    "minRating": 4.0,
+    "minTransactions": 10,
+    "blockNewSeller": true,
+    "blockWords": ["rusak", "mati total", "sparepart", "parts only", "retur", "garansi toko habis", "garansi habis"]
+  },
+  "models": {
+    "decisionModel": "anthropic/claude-sonnet-4",
+    "screeningModel": "openai/gpt-4o-mini",
+    "generalModel": "openai/gpt-4o-mini"
+  },
+  "schedule": {
+    "screeningIntervalMin": 15,
+    "dailyReportHour": 20
+  }
+}

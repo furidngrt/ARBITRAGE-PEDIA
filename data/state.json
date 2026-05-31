@@ -1,0 +1,26 @@
+{
+  "candidates": [
+    {
+      "title": "iPhone 13 128GB Bekas Mulus",
+      "price": 7500000,
+      "url": "https://tokopedia.com/example",
+      "platform": "tokopedia",
+      "category": "hp-tablet",
+      "seller_name": "trusted_seller",
+      "seller_rating": 4.8,
+      "seller_transactions": 250,
+      "condition": "bekas",
+      "image_count": 5,
+      "location": "Jakarta",
+      "id": "cand_1780228339266_ykflmb",
+      "foundAt": "2026-05-31T11:52:19.266Z",
+      "status": "pending"
+    }
+  ],
+  "recommendations": [],
+  "bought": [],
+  "listed": [],
+  "sold": [],
+  "screeningRunAt": "2026-05-31T11:52:19.266Z",
+  "lastDecideAt": null
+}

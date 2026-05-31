@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "rule": "iPhone series always sells within 2-3 days if priced below market",
+    "tags": [
+      "category",
+      "hp-tablet",
+      "flip"
+    ],
+    "role": "DECIDER",
+    "pinned": false,
+    "createdAt": "2026-05-31T11:52:19.271Z",
+    "metrics": {}
+  },
+  {
+    "id": 2,
+    "rule": "Avoid sellers with < 20 transactions — 80% of problems",
+    "tags": [
+      "seller",
+      "risk"
+    ],
+    "role": "SCREENER",
+    "pinned": true,
+    "createdAt": "2026-05-31T11:52:19.271Z",
+    "metrics": {}
+  }
+]
